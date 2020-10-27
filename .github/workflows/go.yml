@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.13
+    - name: Set up Go 1.15
       uses: actions/setup-go@v1
       with:
-        go-version: 1.13
+        go-version: 1.15
       id: go
 
     - name: Check out code into the Go module directory
@@ -28,8 +28,12 @@ jobs:
       run: |
         GITVER=$(git describe --tags || git rev-parse --short HEAD)
         GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.MAINVER=${GITVER}" -v -o gray_amd64_linux .
+        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.MAINVER=${GITVER}" -v -o gray_arm64_linux .
+        GOOS=linux GOARCH=arm GOARM=7 go build -ldflags="-s -w -X main.MAINVER=${GITVER}" -v -o gray_armv7_linux .
         GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X main.MAINVER=${GITVER}" -v -o gray_amd64_windows.exe .
-        zip gray_amd64_linux.zip gray_amd64_linux  
+        tar czf gray_amd64_linux.tar.gz gray_amd64_linux
+        tar czf gray_arm64_linux.tar.gz gray_arm64_linux
+        tar czf gray_armv7_linux.tar.gz gray_armv7_linux
         zip gray_amd64_windows.zip gray_amd64_windows.exe
 
     - name: Release
@@ -37,8 +41,10 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          gray_amd64_linux.zip 
+          gray_amd64_linux.tar.gz 
+          gray_arm64_linux.tar.gz 
+          gray_armv7_linux.tar.gz 
           gray_amd64_windows.zip 
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.X_GITHUB_TOKEN }}
 
